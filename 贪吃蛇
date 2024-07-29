@@ -1,0 +1,184 @@
+#include<iostream>
+#include<easyx.h>
+#include<vector>
+#include<ctime>
+using namespace std;
+class sprite
+{
+public:
+	sprite():sprite(0,0) {};
+	sprite(int x, int y) :m_x(x), m_y(y),m_color(RED) {};
+	//绘制
+	virtual void draw()
+	{
+		//填充颜色和绘制矩形
+		setfillcolor(m_color);//填充颜色
+		fillrectangle(m_x, m_y, m_x+10, m_y+10);//绘制初始的炬块
+	}
+	void moveby(int dx, int dy)
+	{
+		m_x += dx;
+		m_y += dy;
+	}
+	bool collision(const sprite& other)
+	{
+		return m_x == other.m_x && m_y == other.m_y;
+	}
+protected:
+	int m_x;
+	int m_y;
+	COLORREF m_color;
+};
+class snake:public sprite
+{
+public:
+	snake():snake(0,0){}
+		snake(int x, int y) :sprite(x, y)
+		{
+			nodes.push_back(sprite(20, 0));
+			nodes.push_back(sprite(10, 0));
+			nodes.push_back(sprite(0, 0));
+		}
+		void draw() override
+		{
+			for (int i = 0; i < nodes.size(); i++)
+			{
+				nodes[i].draw();
+			}
+		}//蛇的身体移动
+		void bodymove()
+		{
+			for (size_t i = nodes.size()-1; i >0; i--)
+			{
+				nodes[i] = nodes[i - 1];
+			}
+			switch (dir)
+			{
+			case VK_UP:
+				nodes[0].moveby(0,-10);
+				break;
+			case VK_DOWN:
+				nodes[0].moveby(0, 10);
+				break;
+			case VK_LEFT:
+				nodes[0].moveby(-10,0 );
+				break;
+			case VK_RIGHT:
+				nodes[0].moveby(10, 0);
+				break;
+
+			}
+	}
+		bool collision(const sprite& other)
+		{
+			return nodes[0].collision(other);
+		}
+		void incrment()
+		{
+			nodes.push_back(sprite());
+		}
+private:
+	vector<sprite>nodes;//蛇的所有节点
+public:
+	int dir;//定义方向
+};
+class Food :public sprite
+{ 
+public:
+	Food() :sprite(0, 0) 
+	{
+		m_x = rand()%64*10;
+		m_y = rand()%48*10;
+	};
+	void draw()override
+	{
+		setfillcolor(m_color);
+		solidellipse(m_x,m_y,m_x+10,m_y+10);
+	}
+	void changepos()
+	{
+			m_x = rand() % 64 * 10;
+			m_y = rand() % 48 * 10;
+	}  
+};
+class gamescene
+{
+public:
+	gamescene() {};
+	void run()
+	{
+		BeginBatchDraw();//绘制冲缓图
+		cleardevice();
+		snake1.draw();
+		food.draw();
+		EndBatchDraw();
+		//改变蛇的坐标 
+		snake1.bodymove();
+		snakeeatfood();
+	  //获取键盘消息
+		ExMessage msg = { 0 };
+		while (peekmessage(&msg, EM_KEY))
+		{
+			onMsg(msg);
+		}
+	//获取有没有消息
+	}
+	void onMsg(const ExMessage & msg)
+		{//如果有消息
+			if (msg.message == WM_KEYDOWN)
+			{// 判断哪个按键虚拟键码
+				if (msg.vkcode == VK_UP ||
+					msg.vkcode == VK_DOWN ||
+					msg.vkcode == VK_LEFT ||
+					msg.vkcode == VK_RIGHT)
+				{
+					snake1.dir = msg.vkcode;
+				
+				switch(msg.vkcode)
+				{
+			case VK_UP:
+				if (snake1.dir != VK_DOWN)
+					snake1.dir = msg.vkcode;
+				break;
+			case VK_DOWN:
+				if (snake1.dir != VK_UP)
+					snake1.dir = msg.vkcode;
+				break;
+			case VK_LEFT:
+				if (snake1.dir != VK_RIGHT)
+					snake1.dir = msg.vkcode;
+				break;
+			case VK_RIGHT:
+				if (snake1.dir != VK_RIGHT)
+					snake1.dir = msg.vkcode;
+				break;
+}
+				}
+			}
+		}
+	void snakeeatfood()
+	{
+		if (snake1.collision(food))
+		{
+			snake1.incrment(); 
+			food.changepos();
+		}
+	}
+private:
+	snake snake1;
+	Food food;
+};
+int main()
+{
+	initgraph(640, 480, EW_SHOWCONSOLE);
+	sprite s;
+	gamescene scene;
+	srand(time(nullptr));
+	while (true)
+	{
+		scene.run();
+		Sleep(100);
+	}
+	getchar();
+	return 0;
+}
